@@ -1,8 +1,31 @@
 <?php
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'payroll_system');
+// Para sa Railway (production) at Local (development)
+$mysql_url = getenv('MYSQL_URL');
+
+if ($mysql_url) {
+    // RAILWAY: Gamitin ang environment variable
+    $parts = parse_url($mysql_url);
+    
+    $host = $parts['host'];
+    $port = $parts['port'];
+    $dbname = ltrim($parts['path'], '/');
+    $username = $parts['user'];
+    $password = $parts['pass'];
+    
+    define('DB_HOST', $host);
+    define('DB_USER', $username);
+    define('DB_PASS', $password);
+    define('DB_NAME', $dbname);
+    define('DB_PORT', $port);
+    
+} else {
+    // LOCAL: XAMPP/WAMP default
+    define('DB_HOST', 'localhost');
+    define('DB_USER', 'root');
+    define('DB_PASS', '');
+    define('DB_NAME', 'payroll_system');
+    define('DB_PORT', 3306);
+}
 
 class Database {
     private $conn;
@@ -10,7 +33,12 @@ class Database {
     public function getConnection() {
         $this->conn = null;
         try {
-            $this->conn = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASS);
+            // Gamitin ang port para sa Railway
+            $this->conn = new PDO(
+                "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME, 
+                DB_USER, 
+                DB_PASS
+            );
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->exec("set names utf8");
         } catch(PDOException $exception) {
